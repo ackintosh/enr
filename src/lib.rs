@@ -204,7 +204,7 @@ use std::{
     str::FromStr,
 };
 
-pub use error::Error;
+pub use error::{Error, is_unsupported_identity_scheme};
 
 #[cfg(feature = "k256")]
 pub use keys::k256;
@@ -213,6 +213,7 @@ pub use keys::secp256k1;
 #[cfg(all(feature = "ed25519", feature = "k256"))]
 pub use keys::{CombinedKey, CombinedPublicKey, ed25519_dalek};
 
+use crate::error::UNSUPPORTED_IDENTITY_SCHEME;
 pub use builder::Builder;
 pub use keys::{EnrKey, EnrKeyUnambiguous, EnrPublicKey};
 pub use node_id::NodeId;
@@ -1151,7 +1152,7 @@ impl<K: EnrKey> Decodable for Enr<K> {
                 b"id" => {
                     let id = Header::decode_bytes(payload, false)?;
                     if id != b"v4" {
-                        return Err(DecoderError::Custom("Unsupported identity scheme"));
+                        return Err(DecoderError::Custom(UNSUPPORTED_IDENTITY_SCHEME));
                     }
                     alloy_rlp::encode(id)
                 }
