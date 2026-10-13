@@ -2128,6 +2128,24 @@ mod tests {
         )
     }
 
+    /// Tests that decoding a record with an unknown identity scheme is reported as
+    /// [`Error::UnsupportedIdentityScheme`].
+    #[test]
+    fn test_unsupported_identity_scheme_decoding() {
+        // hack an enr object with a non-v4 id. This is not possible via the public API.
+        let key = k256::ecdsa::SigningKey::generate_from_rng(&mut rand::rng());
+
+        let mut enr = Enr::empty(&key).unwrap();
+        enr.content
+            .insert(b"id".to_vec(), alloy_rlp::encode(&b"v5"[..]).into());
+
+        let encoded = alloy_rlp::encode(&enr);
+        assert_eq!(
+            DefaultEnr::decode(&mut encoded.as_ref()).unwrap_err(),
+            Error::UnsupportedIdentityScheme
+        );
+    }
+
     /// Tests [`Enr::set_seq`] in both a failure and success case.
     #[test]
     fn test_set_seq() {
