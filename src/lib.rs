@@ -1575,10 +1575,9 @@ mod tests {
             "eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4eHh4",
             "eHh4eHh4eHh4eHh4eHh4eA"
         );
-        assert!(
-            text.parse::<DefaultEnr>()
-                .unwrap_err()
-                .contains("enr exceeds max size")
+        assert_eq!(
+            text.parse::<DefaultEnr>().unwrap_err(),
+            "Invalid ENR: ExceedsMaxSize"
         );
     }
 
@@ -1651,7 +1650,7 @@ mod tests {
         let text = "enr:-Ia4QHCYrYZbAKWCBRlAy5zzaDZXJBGkcnh4MHcBFZntXNFrdvJjX04jRzjzCBOonrkTfj499SZuOh8R33Ls8RRcy5yCAAGCaWSCdjSCaXCEfwAAAYlzZWNwMjU2azGhA8pjTK4NSay0Adikxrb-jFW3DRFb9AB2nMFADzJYzTE4g3VkcIJ2Xw";
         assert_eq!(
             text.parse::<DefaultEnr>().unwrap_err(),
-            "Invalid ENR: LeadingZero"
+            "Invalid ENR: InvalidRlpData(LeadingZero)"
         );
     }
 
@@ -2063,7 +2062,10 @@ mod tests {
         for (tcp, enr_str) in vectors {
             let res = DefaultEnr::from_str(enr_str);
             if u8::try_from(tcp).is_ok() {
-                assert_eq!(res.unwrap_err().to_string(), "Invalid ENR: LeadingZero");
+                assert_eq!(
+                    res.unwrap_err().to_string(),
+                    "Invalid ENR: InvalidRlpData(LeadingZero)"
+                );
             } else {
                 assert_tcp4(&res.unwrap(), tcp);
             }
