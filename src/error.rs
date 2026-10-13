@@ -2,8 +2,6 @@
 
 use std::fmt;
 
-pub(crate) const UNSUPPORTED_IDENTITY_SCHEME: &str = "Unsupported identity scheme";
-
 #[derive(Clone, Debug, PartialEq, Eq)]
 /// An error type for handling various ENR operations.
 pub enum Error {
@@ -47,11 +45,4 @@ impl std::error::Error for Error {
             Error::InvalidRlpData(e) => Some(e),
         }
     }
-}
-
-/// Returns true if the error returned by `Decodable::decode` means the
-/// identity scheme is not supported by this crate.
-#[must_use]
-pub fn is_unsupported_identity_scheme(e: &alloy_rlp::Error) -> bool {
-    matches!(e, alloy_rlp::Error::Custom(s) if *s == UNSUPPORTED_IDENTITY_SCHEME)
 }
