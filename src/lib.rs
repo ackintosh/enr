@@ -987,8 +987,7 @@ impl<K: EnrKey> Enr<K> {
     /// - [`Error::ExceedsMaxSize`] if `buf` is longer than the maximum ENR size.
     /// - [`Error::UnsupportedIdentityScheme`] if the record's `id` is not `v4`. The record
     ///   may still be valid under a scheme this crate does not know.
-    /// - [`Error::InvalidRlpData`] if the record is malformed, its public key cannot be
-    ///   read as `K`, or its signature does not verify.
+    /// - [`Error::InvalidRlpData`] for any other RLP format error.
     pub fn decode(buf: &mut &[u8]) -> Result<Self, Error> {
         if buf.len() > MAX_ENR_SIZE {
             return Err(Error::ExceedsMaxSize);
