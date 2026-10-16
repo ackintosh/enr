@@ -2145,6 +2145,53 @@ mod tests {
         );
     }
 
+    /// Tests that structurally malformed records are rejected with
+    /// [`Error::InvalidRlpData`] carrying the reason.
+    #[test]
+    fn test_malformed_record_decoding() {
+        // Every item is encoded as a byte string. Seq is `0x01`, which is the same
+        // RLP for the integer 1 and for the single byte 0x01.
+        fn rlp_list(items: &[&[u8]]) -> Vec<u8> {
+            let mut out = Vec::new();
+            alloy_rlp::encode_list::<&[u8], [u8]>(items, &mut out);
+            out
+        }
+
+        let cases: [(&str, Vec<u8>); 3] = [
+            ("Payload is empty", rlp_list(&[])),
+            // the signature must be followed by seq, but the list ends there
+            ("Seq is missing", rlp_list(&[b"test_signature"])),
+            // keys must be in ascending order, but "zz" comes before "aa"
+            (
+                "Unsorted keys",
+                rlp_list(&[b"test_signature", b"\x01", b"zz", b"\x01", b"aa", b"\x01"]),
+            ),
+        ];
+        for (reason, encoded) in cases {
+            assert_eq!(
+                DefaultEnr::decode(&mut encoded.as_slice()).unwrap_err(),
+                Error::InvalidRlpData(DecoderError::Custom(reason)),
+                "{reason}"
+            );
+        }
+    }
+
+    /// Tests that a record whose signature does not verify is rejected.
+    #[test]
+    fn test_invalid_signature_decoding() {
+        let key = k256::ecdsa::SigningKey::generate_from_rng(&mut rand::rng());
+        let mut enr = Enr::empty(&key).unwrap();
+        assert!(enr.verify());
+
+        // flip a bit of the signature without re-signing
+        enr.signature[0] ^= 1;
+        let encoded = alloy_rlp::encode(&enr);
+        assert_eq!(
+            DefaultEnr::decode(&mut encoded.as_ref()).unwrap_err(),
+            Error::InvalidRlpData(DecoderError::Custom("Invalid Signature"))
+        );
+    }
+
     /// Tests [`Enr::set_seq`] in both a failure and success case.
     #[test]
     fn test_set_seq() {
